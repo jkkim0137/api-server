@@ -17,7 +17,8 @@ db.run(
         age INTEGER,
         gender TEXT,
         email TEXT,
-        lastUpdateDate TEXT
+        lastUpdateDate TEXT,
+        party TEXT
     )
 `,
   (err) => {
@@ -37,6 +38,7 @@ function insertInitialData() {
       gender: "Female",
       email: "alice@example.com",
       lastUpdateDate: JSON.stringify(new Date()),
+      party: JSON.stringify(),
     },
     {
       name: "Bob",
@@ -44,21 +46,23 @@ function insertInitialData() {
       gender: "Male",
       email: "bob@example.com",
       lastUpdateDate: JSON.stringify(new Date()),
+      party: JSON.stringify(),
     },
     // ... 기타 초기 데이터 추가 가능
   ];
 
-  const placeholders = initialUsers.map(() => "(?, ?, ?, ?, ?)").join(",");
+  const placeholders = initialUsers.map(() => "(?, ?, ?, ?, ?, ?)").join(",");
   const values = initialUsers.flatMap((user) => [
     user.name,
     user.age,
     user.gender,
     user.email,
     user.lastUpdateDate,
+    user.party,
   ]);
 
   db.run(
-    `INSERT OR IGNORE INTO users (name, age, gender, email, lastUpdateDate) VALUES ${placeholders}`,
+    `INSERT OR IGNORE INTO users (name, age, gender, email, lastUpdateDate, party) VALUES ${placeholders}`,
     values,
     function (err) {
       if (err) {
@@ -96,14 +100,15 @@ app.get("/api/users/:id", (req, res) => {
 
 // user 추가
 app.post("/api/users", (req, res) => {
-  const { name, age, gender, email } = req.body;
-  const sql = `INSERT INTO users (name, age, gender, email, lastUpdateDate) VALUES (?, ?, ?, ?, ?)`;
+  const { name, age, gender, email, party } = req.body;
+  const sql = `INSERT INTO users (name, age, gender, email, lastUpdateDate, party) VALUES (?, ?, ?, ?, ?, ?)`;
   const lastUpdateDate = JSON.stringify(new Date());
-  db.run(sql, [name, age, gender, email, lastUpdateDate], function (err) {
+  db.run(sql, [name, age, gender, email, lastUpdateDate, party], function (err) {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
+    // console.log('추가 받은데이터', req.body)
     res.json({ message: "User added successfully!", id: this.lastID });
   });
 });
@@ -111,13 +116,14 @@ app.post("/api/users", (req, res) => {
 // user 수정
 app.put("/api/users/:id", (req, res) => {
   const userId = req.params.id;
-  const { name, age, gender, email } = req.body;
-  const sql = `UPDATE users SET name = ?, age = ?, gender = ?, email = ? WHERE id = ?`;
-  db.run(sql, [name, age, gender, email, userId], function (err) {
+  const { name, age, gender, email, party } = req.body;
+  const sql = `UPDATE users SET name = ?, age = ?, gender = ?, email = ?, party = ? WHERE id = ? `;
+  db.run(sql, [name, age, gender, email, party, userId], function (err) {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
+    console.log('수정 받은데이터', req.body)
     res.json({ message: "User updated successfully!" });
   });
 });
